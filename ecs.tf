@@ -14,7 +14,8 @@ resource "aws_ecs_task_definition" "this" {
     cpu                      = 1024
     memory                   = 3072
     requires_compatibilities = ["FARGATE"]
-    execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+    execution_role_arn       = aws_iam_role.ecs_task["ecsTaskExecutionRole"].arn
+    task_role_arn            = aws_iam_role.ecs_task["ecsTaskRole"].arn
     network_mode             = "awsvpc"
     container_definitions    = <<-EOS
     [
@@ -44,7 +45,7 @@ resource "aws_ecs_task_definition" "this" {
         "environmentFiles": [],
         "mountPoints": [
             {
-                "sourceVolume": "jenkins-home",
+                "sourceVolume": "jenkins_home",
                 "containerPath": "/var/jenkins_home",
                 "readOnly": false
             }
@@ -67,10 +68,14 @@ resource "aws_ecs_task_definition" "this" {
     operating_system_family = "LINUX"
   }
   volume {
-    name = "jenkins-home"
+    name = "jenkins_home"
     efs_volume_configuration {
-      file_system_id          = module.efs.id
-      root_directory          = "/jenkins_home"
+        file_system_id      = module.efs.id
+        transit_encryption  = "ENABLED"
+        authorization_config {
+            access_point_id = module.efs.access_points["jenkins_home"].id
+            iam             = "ENABLED"
+        }
     }
   }
 }

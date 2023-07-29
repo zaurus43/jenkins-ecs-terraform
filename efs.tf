@@ -24,6 +24,23 @@ module "efs" {
             source_security_group_id = module.vpc.default_security_group_id
         }
     }
+    access_points = {
+        jenkins_home = {
+            name                     = "jenkins-home"
+            posix_user = {
+                gid                  = 1000
+                uid                  = 1000
+            }
+            root_directory = {
+                path                 = "/jenkins_home"
+                creation_info = {
+                owner_gid            = 1000
+                owner_uid            = 1000
+                permissions          = "755"
+                }
+            }
+        }
+    }
     enable_backup_policy             = false
     create_replication_configuration = false
     tags = {
